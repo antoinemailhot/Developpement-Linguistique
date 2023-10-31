@@ -15,6 +15,6 @@ Si vous souhaitez contribuer à ce projet, n'hésitez pas à soumettre des pull 
 
 ## Licence
 
-Ce projet est sous licence [MIT](LICENSE.md).
+Ce projet est sous licence [MIT](LICENSE).
 
 ---
