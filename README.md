@@ -1,4 +1,4 @@
-# Auteur
+# Auteurs
 Antoine Mailhot  
 Raphaël Lamoureux
 
