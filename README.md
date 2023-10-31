@@ -1,5 +1,5 @@
 # Auteur
-Antoine Mailhot
+Antoine Mailhot  
 Raphaël Lamoureux
 
 # Développement Linguistique
