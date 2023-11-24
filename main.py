@@ -31,7 +31,6 @@ def mesure_distance_euclidienne(vecteur1, vecteur2):
 
 # Fin calcul distance
 
-
 # Retourne un tableau Numpy à partir d'un fichier png.
 def obtenir_tableau_par_image_png(chemin):
    # Ouvrir l'image avec Pillow.
