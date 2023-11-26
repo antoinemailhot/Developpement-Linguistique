@@ -8,10 +8,9 @@ import random
 def main():
     chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
     chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'    
-    NB_IMAGES_PAR_CHARACTERE = 55
-    POURCENTAGE_TEST = 0.1    
-    indexs_test = indexs_aleatoires(POURCENTAGE_TEST,NB_IMAGES_PAR_CHARACTERE)
+    VOISINS = 5
     donnees = obtenir_tableau_traiter_depuis_fichier_csv(chemin_fichier_csv)
+    k_plus_proches_voisins(donnees, VOISINS)
     for chemin_Image in donnees[:,0]:
       print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
             
@@ -36,8 +35,12 @@ def mesure_distance_euclidienne(vecteur1, vecteur2):
 # Fin calcul distance
 
 # Calcul des K plus proches voisins.
-def k_plus_proches_voisins():
+def k_plus_proches_voisins(donnees, voisins):
    # TODO: A coder
+   NB_IMAGES_PAR_CHARACTERE = 55
+   POURCENTAGE_TEST = 0.1
+   indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
+   donnees, donnees_test = separer_donnees(donnees, indexs_test)
 
    return
 
@@ -57,8 +60,33 @@ def indexs_aleatoires(pourcentage:float, longueur:int):
                rand += 1
          j += 1
       tabIndex[i] = rand
-   print (tabIndex)
    return tabIndex
+
+   # Donne des indexs aléatoires
+def separer_donnees(donnees, test):
+   NB_IMAGES_PAR_CHARACTERE = 55
+   NB_CARACTERES_DIFFERENTS = 62
+   index = 0
+   index_t = 0
+   index_d = 0
+
+   tab_test = [[None]*len(test)]*NB_CARACTERES_DIFFERENTS
+   tab_donnees = [[None]*(NB_IMAGES_PAR_CHARACTERE - len(test))]*NB_CARACTERES_DIFFERENTS
+
+   for d in donnees:
+      if (test.count(index) > 0):
+         tab_test[int(index/NB_IMAGES_PAR_CHARACTERE)][index_t] = d
+         index_t += 1
+         if(index_t == len(tab_test[0])):
+            index_t = 0
+      else:
+         tab_donnees[int(index/NB_IMAGES_PAR_CHARACTERE)][index_d] = d
+         index_d += 1
+         if(index_d == len(tab_donnees[0])):
+            index_d = 0
+      index += 1
+
+   return tab_donnees, tab_test
 
 # Retourne un tableau Numpy à partir d'un fichier png.
 def obtenir_tableau_par_image_png(chemin):
