@@ -2,14 +2,18 @@
 from PIL import Image # Importation de la biliothèque Pillow.
 import numpy as np # Importation de la bibliothèque Numpy.
 import csv
+import random
 
 # Main
 def main():
     chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
-    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'
+    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'    
+    NB_IMAGES_PAR_CHARACTERE = 55
+    POURCENTAGE_TEST = 0.1    
+    indexs_test = indexs_aleatoires(POURCENTAGE_TEST,NB_IMAGES_PAR_CHARACTERE)
     donnees = obtenir_tableau_traiter_depuis_fichier_csv(chemin_fichier_csv)
     for chemin_Image in donnees[:,0]:
-        print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
+      print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
             
 # Fin du main.
 
@@ -37,6 +41,24 @@ def k_plus_proches_voisins():
 
    return
 
+# Donne des indexs aléatoires
+def indexs_aleatoires(pourcentage:float, longueur:int):
+   nbIndex = int(pourcentage * longueur)
+   tabIndex = [None] * nbIndex
+   for i in range(nbIndex):
+      rand:int = random.randrange(0, longueur)
+      j = 0
+      while j <= i:
+         if(tabIndex[j] == rand):
+            j = 0
+            if(rand == longueur-1):
+               rand = 0
+            else:
+               rand += 1
+         j += 1
+      tabIndex[i] = rand
+   print (tabIndex)
+   return tabIndex
 
 # Retourne un tableau Numpy à partir d'un fichier png.
 def obtenir_tableau_par_image_png(chemin):
