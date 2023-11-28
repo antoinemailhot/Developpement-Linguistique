@@ -61,7 +61,6 @@ def k_plus_proches_voisins(donnees, nb_voisins):
    chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'   
 
-
    indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
    donnees, donnees_test = separer_donnees(donnees, indexs_test)
 
