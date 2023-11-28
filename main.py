@@ -73,11 +73,16 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
                index_plus_grande_distance = 0
                i = 0
                while i < nb_voisins:
+                  # Si le voisin[i][0] est null alors on assigne l'index plus grande distance à i.
                   if(voisins[i][0] is None):
                      index_plus_grande_distance = i
                      break
+                  # Si le voisin[i][0] est plus grand que mon voisin le plus grand, alors il devient mon 
+                  # voisin le plus grand.
                   if(voisins[i][0] > voisins[index_plus_grande_distance][0]):
                      index_plus_grande_distance = i
+
+                  # on passe à l'index suivant.
                   i += 1
                if(voisins[index_plus_grande_distance][0] is None or distance < voisins[index_plus_grande_distance][0]):
                   voisins[index_plus_grande_distance] = [distance, d[1][0]]
