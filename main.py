@@ -35,21 +35,19 @@ def mesure_distance_euclidienne(vecteur1, vecteur2):
 # Fin calcul distance
 
 #trouver le caractere le plus frequent dans les voisins
-def voter(voisins):
-   tab = []
-   for v in voisins:
-      tab.append(v[1])
+from collections import Counter
 
-   freq = 0
-   caractere = tab[0]
-     
-   for c in tab:
-       freq_courrante = tab.count(c)
-       if(freq_courrante > freq):
-          freq = freq_courrante
-          caractere = c
- 
-   return caractere
+def voter(voisins):
+    # Créer un compteur des caractères à partir des voisins
+    compteur = Counter(v[1] for v in voisins)
+    
+    # Trouver le caractère le plus fréquent en utilisant most_common
+    # most_common : https://docs.python.org/dev/library/collections.html#counter-objects
+    caractere = compteur.most_common(1)[0][0]
+    
+    # Retourner le caractère le plus fréquent
+    return caractere
+
 
 
 
