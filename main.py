@@ -20,7 +20,16 @@ def main():
 
 # Calcul distance hamming sur deux vecteur. //Cours INF1183-SE-09-data_minning.pdf p.21
 def distance_Hamming(vecteur1, vecteur2):
-   return np.sum(vecteur1 != vecteur2)
+   #return np.sum(vecteur1 != vecteur2) Pour petit tableau
+   # np.bitwise_xor : https://numpy.org/doc/stable/reference/generated/numpy.bitwise_xor.html
+   # Calcul le xor au niveau du bit.
+   # np.count_nonzero : https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
+   # Compte les valeurs non null.
+   # Utilisez la fonction np.count_nonzero pour compter les bits différents
+   # Faire attention la fonction bitwise_xor se crée un tableau temporaire donc si un trop gros tableau
+   # cela peut générer une erreur.
+    xor_result = np.bitwise_xor(vecteur1, vecteur2)
+    return np.count_nonzero(xor_result)
 
 # Calcul distance //Cours INF1183-SE-09-data_minning.pdf p.20
 
