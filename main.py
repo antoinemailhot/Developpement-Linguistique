@@ -10,7 +10,7 @@ def main():
     chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'    
     VOISINS = 5
     donnees = obtenir_tableau_traiter_depuis_fichier_csv(chemin_fichier_csv)
-    k_plus_proches_voisins(donnees, VOISINS)
+    k_plus_proches_voisins(donnees, VOISINS, chemin_repertoireEHWC)
     #for chemin_Image in donnees[:,0]:
       #print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
             
@@ -54,11 +54,10 @@ def voter(voisins):
 
 
 # Calcul des K plus proches voisins.
-def k_plus_proches_voisins(donnees, nb_voisins):
+def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
    # TODO: A coder
    NB_IMAGES_PAR_CHARACTERE = 55
    POURCENTAGE_TEST = 0.1
-   chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'   
 
    indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
