@@ -1,2 +1,4 @@
 numpy==1.24.3
 Image==1.5.33
+requests==2.31.0
+scipy==1.11.4
