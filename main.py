@@ -37,9 +37,10 @@ def distance_Hamming(vecteur1, vecteur2):
 
 # Mesure distance manhattan. (p = 1) //INF1183-SE-09-data_minning.pdf p.20
 def mesure_distance_manhattan(vecteur1, vecteur2):
-   array1 = vecteur1[:, :, 0]
-   array2 = vecteur2[:, :, 0]
-   return cdist(array1, array2, metric='cityblock')
+   #array1 = vecteur1[:, :, 0]
+   #array2 = vecteur2[:, :, 0]
+   #return cdist(array1, array2, metric='cityblock')
+   return np.sum(np.abs(vecteur1-vecteur2))
    
 
 # Mesure distance euclidienne. (p = 2) //INF1183-SE-09-data_minning.pdf p.20
