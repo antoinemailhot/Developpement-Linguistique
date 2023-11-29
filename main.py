@@ -4,6 +4,7 @@ import numpy as np # Importation de la bibliothèque Numpy.
 import csv
 import random
 from concurrent.futures import ThreadPoolExecutor
+from scipy.spatial.distance import cdist
 
 # Main
 def main():
@@ -36,7 +37,10 @@ def distance_Hamming(vecteur1, vecteur2):
 
 # Mesure distance manhattan. (p = 1) //INF1183-SE-09-data_minning.pdf p.20
 def mesure_distance_manhattan(vecteur1, vecteur2):
-   return np.sum(np.abs(vecteur1 - vecteur2))
+   array1 = vecteur1[:, :, 0]
+   array2 = vecteur2[:, :, 0]
+   return cdist(array1, array2, metric='cityblock')
+   
 
 # Mesure distance euclidienne. (p = 2) //INF1183-SE-09-data_minning.pdf p.20
 def mesure_distance_euclidienne(vecteur1, vecteur2):
@@ -71,26 +75,25 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
    indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
    donnees, donnees_test = separer_donnees(donnees, indexs_test)
 
-   for caractere_t in donnees_test:
+   with ThreadPoolExecutor(max_workers=5) as executeur:
+      for caractere_t in donnees_test:
 
-      print("tests pour le caractère: ", caractere_t[0][1][0])
+         print("tests pour le caractère: ", caractere_t[0][1][0])
 
-      # Utilisation de multi-thread : https://docs.python.org/3/library/concurrent.futures.html
-      with ThreadPoolExecutor(max_workers=8) as executeur:
+         # Utilisation de multi-thread : https://docs.python.org/3/library/concurrent.futures.html
          futures = []
 
-         for caractere_t in donnees_test:
-            print("tests pour le caractère: ", caractere_t[0][1][0])
-            for t in caractere_t:
-                tableau_image_test = obtenir_tableau_par_image_png(chemin_repertoireEHWC + t[0][0])
+         print("tests pour le caractère: ", caractere_t[0][1][0])
+         for t in caractere_t:
+            tableau_image_test = obtenir_tableau_par_image_png(chemin_repertoireEHWC + t[0][0])
 
-                # Soumettre la tâche au ThreadPoolExecutor
-                future = executeur.submit(trouver_voisins_proches, tableau_image_test, donnees, chemin_repertoireEHWC)
-                print("Append future :")
-                print(future)
-                futures.append((t, future))
+            # Soumettre la tâche au ThreadPoolExecutor
+            future = executeur.submit(trouver_voisins_proches, tableau_image_test, donnees, chemin_repertoireEHWC)
+            print("Append future :")
+            print(future)
+            futures.append((t, future))
 
-         # Attendre que toutes les futures soient terminées
+            # Attendre que toutes les futures soient terminées
          for t, future in futures:
                voisins = future.result()
                print(voter(voisins))
@@ -131,7 +134,7 @@ def trouver_voisins_proches(tableau_image_test, donnees, chemin_repertoireEHWC):
 
    for caractere_d in donnees:
       for d in caractere_d:
-         distance = distance_Hamming(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
+         distance = mesure_distance_manhattan(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
          distances_labels.append((distance, d[1][0]))
 
    indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], nb_voisins)[:nb_voisins]
@@ -167,8 +170,10 @@ def separer_donnees(donnees, test):
    index_t = 0
    index_d = 0
 
-   tab_test = [[None]*len(test) for i in range(NB_CARACTERES_DIFFERENTS)]
-   tab_donnees = [[None]*(NB_IMAGES_PAR_CHARACTERE - len(test)) for i in range(NB_CARACTERES_DIFFERENTS)]
+   tab_test = np.full((NB_CARACTERES_DIFFERENTS, len(test)),None)
+   tab_donnees = np.full((NB_CARACTERES_DIFFERENTS, NB_IMAGES_PAR_CHARACTERE - len(test)),None)
+   #tab_test = [[None]*len(test) for i in range(NB_CARACTERES_DIFFERENTS)]
+   #tab_donnees = [[None]*(NB_IMAGES_PAR_CHARACTERE - len(test)) for i in range(NB_CARACTERES_DIFFERENTS)]
 
    for d in donnees:
       if (test.count(index % NB_IMAGES_PAR_CHARACTERE) > 0):
