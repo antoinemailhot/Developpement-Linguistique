@@ -95,10 +95,6 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
                if(voisins[index_plus_grande_distance][0] is None or distance < voisins[index_plus_grande_distance][0]):
                   voisins[index_plus_grande_distance] = [distance, d[1][0]]
          print(voter(voisins))
-
-
-
-
    return
 
 # Donne des indexs aléatoires
