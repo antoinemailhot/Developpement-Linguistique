@@ -3,6 +3,7 @@ from PIL import Image # Importation de la biliothèque Pillow.
 import numpy as np # Importation de la bibliothèque Numpy.
 import csv
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 # Main
 def main():
@@ -71,35 +72,74 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
    donnees, donnees_test = separer_donnees(donnees, indexs_test)
 
    for caractere_t in donnees_test:
+
       print("tests pour le caractère: ", caractere_t[0][1][0])
-      for t in caractere_t:
-         tableau_image_test = obtenir_tableau_par_image_png(chemin_repertoireEHWC + t[0][0])
-         voisins = [[None, None]] * nb_voisins
-         for caractere_d in donnees:
-            for d in caractere_d:
-               distance = distance_Hamming(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
-               index_plus_grande_distance = 0
-               i = 0
-               while i < nb_voisins:
-                  # Si le voisin[i][0] est null alors on assigne l'index plus grande distance à i.
-                  if(voisins[i][0] is None):
-                     index_plus_grande_distance = i
-                     break
+
+      # Utilisation de multi-thread : https://docs.python.org/3/library/concurrent.futures.html
+      with ThreadPoolExecutor(max_workers=8) as executeur:
+         futures = []
+
+         for caractere_t in donnees_test:
+            print("tests pour le caractère: ", caractere_t[0][1][0])
+            for t in caractere_t:
+                tableau_image_test = obtenir_tableau_par_image_png(chemin_repertoireEHWC + t[0][0])
+
+                # Soumettre la tâche au ThreadPoolExecutor
+                future = executeur.submit(trouver_voisins_proches, tableau_image_test, donnees, chemin_repertoireEHWC)
+                print("Append future :")
+                print(future)
+                futures.append((t, future))
+
+         # Attendre que toutes les futures soient terminées
+         for t, future in futures:
+               voisins = future.result()
+               print(voter(voisins))
+
+
+
+      #for t in caractere_t:
+         #for caractere_d in donnees:
+         #   for d in caractere_d:
+         #      distance = distance_Hamming(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
+         #      index_plus_grande_distance = 0
+         #      i = 0
+         #      while i < nb_voisins:
+         #         # Si le voisin[i][0] est null alors on assigne l'index plus grande distance à i.
+         #         if(voisins[i][0] is None):
+         #            index_plus_grande_distance = i
+         #            break
                   # Si le voisin[i][0] est plus grand que mon voisin le plus grand, alors il devient mon 
                   # voisin le plus grand.
-                  if(voisins[i][0] > voisins[index_plus_grande_distance][0]):
-                     index_plus_grande_distance = i
+         #         if(voisins[i][0] > voisins[index_plus_grande_distance][0]):
+         #            index_plus_grande_distance = i
 
                   # on passe à l'index suivant.
-                  i += 1
-               if(voisins[index_plus_grande_distance][0] is None or distance < voisins[index_plus_grande_distance][0]):
-                  voisins[index_plus_grande_distance] = [distance, d[1][0]]
-         print(voter(voisins))
-
+         #         i += 1
+         #      if(voisins[index_plus_grande_distance][0] is None or distance < voisins[index_plus_grande_distance][0]):
+         #         voisins[index_plus_grande_distance] = [distance, d[1][0]]
+         #print(voter(voisins))
 
 
 
    return
+
+def trouver_voisins_proches(tableau_image_test, donnees, chemin_repertoireEHWC):
+   nb_voisins = len(donnees[0])
+   voisins = [[None, None]] * nb_voisins
+
+   distances_labels = []
+
+   for caractere_d in donnees:
+      for d in caractere_d:
+         distance = distance_Hamming(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
+         distances_labels.append((distance, d[1][0]))
+
+   indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], nb_voisins)[:nb_voisins]
+
+   for i, index in enumerate(indices_k_plus_petites):
+      voisins[i] = [distances_labels[index][0], distances_labels[index][1]]
+
+   return voisins
 
 # Donne des indexs aléatoires
 def indexs_aleatoires(pourcentage:float, longueur:int):
