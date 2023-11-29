@@ -77,7 +77,7 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
          voisins = [[None, None]] * nb_voisins
          for caractere_d in donnees:
             for d in caractere_d:
-               distance = distance_Hamming(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
+               distance = mesure_distance_euclidienne(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
                index_plus_grande_distance = 0
                i = 0
                while i < nb_voisins:

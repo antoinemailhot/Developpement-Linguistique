@@ -18,3 +18,8 @@ Si vous souhaitez contribuer à ce projet, n'hésitez pas à soumettre des pull 
 Ce projet est sous licence [MIT](LICENSE).
 
 ---
+
+# Installation de l'environnement :
+## Installer python et pip.
+## Effectuer en terminal : pip install -r requirements.txt
+## Lancer python sur main.py : python3 main.py
