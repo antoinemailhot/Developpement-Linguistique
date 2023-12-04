@@ -65,7 +65,6 @@ def voter(voisins):
 
 
 
-
 # Calcul des K plus proches voisins.
 def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
    # TODO: A coder
