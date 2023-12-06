@@ -27,8 +27,14 @@ def obtenir_tableau_par_image_png(chemin):
    # Ouvrir l'image avec Pillow.
    image = Image.open(chemin)
 
+   # Convertit l'image en tableau.
+   tableau_pixels = np.array(image)
+
+   # Normaliser les valeurs de pixels entre 0 et 1.
+   tableau_pixels = tableau_pixels / 255.0
+
    # Convertit l'image en un tableau et le retourne.
-   return np.array(image)
+   return tableau_pixels
 
 # Retourne les données du fichier csv dans un tableau.
 def obtenir_tableau_depuis_fichier_csv(chemin):
