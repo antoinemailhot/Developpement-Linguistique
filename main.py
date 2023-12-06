@@ -6,12 +6,30 @@ import numpy as np # Importation de la bibliothèque Numpy.
 import csv
 import random
 from concurrent.futures import ThreadPoolExecutor
-from scipy.spatial.distance import cdist
+#from scipy.spatial.distance import cdist
+
+# Chargée un dictionnaire
+def charger_dictionnaire(chemin_dictionnaire):
+   with open(chemin_dictionnaire, "r", encoding="utf-8") as fichier:
+      mots = {mot.strip() for mot in fichier}
+   return mots
+
+# Charger les dictionnaires.
+dictionnaire_anglais = charger_dictionnaire("./Dictionnaires/american-english")
+dictionnaire_francais = charger_dictionnaire("./Dictionnaires/french")
+
+# Valider un mot
+def valider_mot(mot, dictionnaire):
+   mot_minuscule = mot.lower()
+   for mot_dictionnaire in dictionnaire:
+      if(mot_dictionnaire.lower() == mot_minuscule):
+         return True
+   return False
 
 # Main
 def main():
     chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
-    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'    
+    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'  
     VOISINS = 5
     donnees = obtenir_tableau_traiter_depuis_fichier_csv(chemin_fichier_csv)
     k_plus_proches_voisins(donnees, VOISINS, chemin_repertoireEHWC)
