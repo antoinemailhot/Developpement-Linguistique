@@ -1,3 +1,5 @@
+# But du projet : Pouvoir lire et reconnaître des charactères à partir d'une image.
+
 # Importation de librairies.
 from PIL import Image # Importation de la biliothèque Pillow.
 import numpy as np # Importation de la bibliothèque Numpy.
