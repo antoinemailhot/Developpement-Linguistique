@@ -8,6 +8,8 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 #from scipy.spatial.distance import cdist
 
+# Chargement des fichiers externes.
+
 # Chargée un dictionnaire
 def charger_dictionnaire(chemin_dictionnaire):
    with open(chemin_dictionnaire, "r", encoding="utf-8") as fichier:
@@ -17,6 +19,34 @@ def charger_dictionnaire(chemin_dictionnaire):
 # Charger les dictionnaires.
 dictionnaire_anglais = charger_dictionnaire("./Dictionnaires/american-english")
 dictionnaire_francais = charger_dictionnaire("./Dictionnaires/french")
+
+
+
+# Retourne un tableau Numpy à partir d'un fichier png.
+def obtenir_tableau_par_image_png(chemin):
+   # Ouvrir l'image avec Pillow.
+   image = Image.open(chemin)
+
+   # Convertit l'image en un tableau et le retourne.
+   return np.array(image)
+
+# Retourne les données du fichier csv dans un tableau.
+def obtenir_tableau_depuis_fichier_csv(chemin):
+   donnees = []
+   with open(chemin, newline='') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+        for ligne in spamreader:
+            donnees.append([element.split(',') for element in ligne])
+
+   return np.array(donnees)
+
+# Obtenir tableau traite du fichier csv.
+def obtenir_tableau_traiter_depuis_fichier_csv(chemin):
+   donnees = obtenir_tableau_depuis_fichier_csv(chemin)
+   return donnees[1:]
+
+# Charger le fichier csv.
+donnes_fichier_csv = obtenir_tableau_traiter_depuis_fichier_csv("./EnglishHandwrittenCharacters/english.csv")
 
 # Valider un mot
 def valider_mot(mot, dictionnaire):
@@ -29,9 +59,8 @@ def valider_mot(mot, dictionnaire):
 # Main
 def main():
     chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
-    chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'  
     VOISINS = 5
-    donnees = obtenir_tableau_traiter_depuis_fichier_csv(chemin_fichier_csv)
+    donnees = donnes_fichier_csv
     k_plus_proches_voisins(donnees, VOISINS, chemin_repertoireEHWC)
     #for chemin_Image in donnees[:,0]:
       #print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
@@ -210,29 +239,6 @@ def separer_donnees(donnees, test):
       index += 1
 
    return tab_donnees, tab_test
-
-# Retourne un tableau Numpy à partir d'un fichier png.
-def obtenir_tableau_par_image_png(chemin):
-   # Ouvrir l'image avec Pillow.
-   image = Image.open(chemin)
-
-   # Convertit l'image en un tableau et le retourne.
-   return np.array(image)
-
-# Retourne les données du fichier csv dans un tableau.
-def obtenir_tableau_depuis_fichier_csv(chemin):
-   donnees = []
-   with open(chemin, newline='') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-        for ligne in spamreader:
-            donnees.append([element.split(',') for element in ligne])
-
-   return np.array(donnees)
-
-# Obtenir tableau traite du fichier csv.
-def obtenir_tableau_traiter_depuis_fichier_csv(chemin):
-   donnees = obtenir_tableau_depuis_fichier_csv(chemin)
-   return donnees[1:]
 
 if __name__ == "__main__":
  main()
