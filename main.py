@@ -10,6 +10,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Chargement des fichiers externes.
 
+# Définir le chemin du répertoire EnglishHandwrittenCharacters
+chemin_repertoireEHWC = "./EnglishHandwrittenCharacters/"
+chemin_repertoire_Dictionnaires = "./Dictionnaires/"
+
 # Chargée un dictionnaire
 def charger_dictionnaire(chemin_dictionnaire):
    with open(chemin_dictionnaire, "r", encoding="utf-8") as fichier:
@@ -17,10 +21,8 @@ def charger_dictionnaire(chemin_dictionnaire):
    return mots
 
 # Charger les dictionnaires.
-dictionnaire_anglais = charger_dictionnaire("./Dictionnaires/american-english")
-dictionnaire_francais = charger_dictionnaire("./Dictionnaires/french")
-
-
+dictionnaire_anglais = charger_dictionnaire(chemin_repertoire_Dictionnaires + "american-english")
+dictionnaire_francais = charger_dictionnaire(chemin_repertoire_Dictionnaires + "french")
 
 # Retourne un tableau Numpy à partir d'un fichier png.
 def obtenir_tableau_par_image_png(chemin):
@@ -52,7 +54,20 @@ def obtenir_tableau_traiter_depuis_fichier_csv(chemin):
    return donnees[1:]
 
 # Charger le fichier csv.
-donnes_fichier_csv = obtenir_tableau_traiter_depuis_fichier_csv("./EnglishHandwrittenCharacters/english.csv")
+donnes_fichier_csv = obtenir_tableau_traiter_depuis_fichier_csv(chemin_repertoireEHWC + "english.csv")
+
+# Chargements des images.
+def charger_toutes_les_images (donnees):
+   tableau_images = []
+   chemins_images = [chemin_repertoireEHWC + str(chemin[0]).strip() for chemin in donnees[:, 0]]
+   for chemin in chemins_images:
+      #print(chemin.strip())
+      image = obtenir_tableau_par_image_png(chemin.strip())
+      #print(image)
+      tableau_images.append(image)
+   return []
+
+toutes_images = charger_toutes_les_images(donnes_fichier_csv)
 
 # Valider un mot
 def valider_mot(mot, dictionnaire):
@@ -64,10 +79,10 @@ def valider_mot(mot, dictionnaire):
 
 # Main
 def main():
-    chemin_repertoireEHWC = './EnglishHandwrittenCharacters/'
     VOISINS = 5
     donnees = donnes_fichier_csv
-    k_plus_proches_voisins(donnees, VOISINS, chemin_repertoireEHWC)
+    images = toutes_images
+    k_plus_proches_voisins(donnees, VOISINS, images)
     #for chemin_Image in donnees[:,0]:
       #print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
             
@@ -122,11 +137,9 @@ def voter(voisins):
 
 
 # Calcul des K plus proches voisins.
-def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
-   # TODO: A coder
+def k_plus_proches_voisins(donnees, nb_voisins, images):
    NB_IMAGES_PAR_CHARACTERE = 55
    POURCENTAGE_TEST = 0.1
-   chemin_fichier_csv = chemin_repertoireEHWC + 'english.csv'   
 
    indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
    donnees, donnees_test = separer_donnees(donnees, indexs_test)
@@ -141,10 +154,11 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
 
          print("tests pour le caractère: ", caractere_t[0][1][0])
          for t in caractere_t:
-            tableau_image_test = obtenir_tableau_par_image_png(chemin_repertoireEHWC + t[0][0])
+            # Utilisé l'image pré-chargée
+            tableau_image_test = images[t[0][0]]
 
             # Soumettre la tâche au ThreadPoolExecutor
-            future = executeur.submit(trouver_voisins_proches, tableau_image_test, donnees, chemin_repertoireEHWC)
+            future = executeur.submit(trouver_voisins_proches, tableau_image_test, donnees, images)
             print("Append future :")
             print(future)
             futures.append((t, future))
@@ -182,7 +196,7 @@ def k_plus_proches_voisins(donnees, nb_voisins, chemin_repertoireEHWC):
 
    return
 
-def trouver_voisins_proches(tableau_image_test, donnees, chemin_repertoireEHWC):
+def trouver_voisins_proches(tableau_image_test, donnees, images):
    nb_voisins = len(donnees[0])
    voisins = [[None, None]] * nb_voisins
 
@@ -190,7 +204,7 @@ def trouver_voisins_proches(tableau_image_test, donnees, chemin_repertoireEHWC):
 
    for caractere_d in donnees:
       for d in caractere_d:
-         distance = mesure_distance_manhattan(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
+         distance = mesure_distance_manhattan(tableau_image_test, images[d[0][0]])
          distances_labels.append((distance, d[1][0]))
 
    indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], nb_voisins)[:nb_voisins]
