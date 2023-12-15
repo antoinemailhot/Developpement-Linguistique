@@ -95,7 +95,7 @@ def main():
     for i in images:
        donnees_images[cpt] = [i, donnees[cpt][1][0]]
        cpt += 1
-    k_plus_proches_voisins(donnees_images)
+    k_plus_proches_voisins(donnees_images, fonction=1)
             
 # Fin du main.
 
@@ -125,11 +125,26 @@ def mesure_distance_manhattan(vecteur1, vecteur2):
 def mesure_distance_euclidienne(vecteur1, vecteur2):
    return np.sqrt(np.sum(vecteur1 - vecteur2) ** 2)
 
+def initialiser_position(donnes):
+   positions = []     
+   cpt_ligne = 0
+   for valeur in donnes:
+      for ligne in np.where(valeur == 0):
+         if(len(ligne) != 0):
+            for colonne in ligne:
+               positions.append([cpt_ligne,colonne])
+      cpt_ligne += 1
+   return positions
+
 #https://stackoverflow.com/questions/45742199/find-nearest-neighbors-of-a-numpy-array-in-list-of-numpy-arrays-using-euclidian
-def nearest_neighbors(values, all_values, nbr_neighbors=1):
-    nn = NearestNeighbors(nbr_neighbors, metric='minkowski', algorithm='auto').fit(all_values)
-    dists, idxs = nn.kneighbors(values)
-    return dists
+def nearest_neighbors(test, donne):
+   #positions_test = initialiser_position(test)
+   #positions_donnee = initialiser_position(donne)
+      
+   nn = NearestNeighbors(n_neighbors=1, metric='minkowski', algorithm='auto')
+   nn.fit(donne)
+   dists, idxs = nn.kneighbors(test)
+   return dists
 
 # Fin calcul distance
 
@@ -146,12 +161,22 @@ def voter(voisins):
     return caractere
 
 # Calcul des K plus proches voisins.
-def k_plus_proches_voisins(donnees):
+def k_plus_proches_voisins(donnees, fonction):
    NB_IMAGES_PAR_CHARACTERE = 55
    POURCENTAGE_TEST = 0.1
 
-   indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
+   #indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
+   indexs_test = [0,1,2,3,4]
    donnees, donnees_test = separer_donnees(donnees, indexs_test)
+
+   if(fonction >= 1):
+      for caractere_d in donnees:
+         for d in caractere_d:
+            d[0] = initialiser_position(d[0])
+      for caractere_t in donnees_test:
+         for t in caractere_t:
+            t[0] = initialiser_position(t[0])
+
 
    with ThreadPoolExecutor(max_workers=5) as executeur:
       for caractere_t in donnees_test:
@@ -159,11 +184,10 @@ def k_plus_proches_voisins(donnees):
          # Utilisation de multi-thread : https://docs.python.org/3/library/concurrent.futures.html
          futures = []
 
-         print("tests pour le caractère: ", caractere_t[0][1][0])
+         print("tests pour le caractère: ", caractere_t[0][1])
          for t in caractere_t:
             # Soumettre la tâche au ThreadPoolExecutor
-            future = executeur.submit(trouver_voisins_proches, t, donnees)
-            #future = executeur.submit(nearest_neighbors, donnees_test, donnees)
+            future = executeur.submit(trouver_voisins_proches, t, donnees, fonction)
             futures.append((t, future))
 
             # Attendre que toutes les futures soient terminées
@@ -172,14 +196,16 @@ def k_plus_proches_voisins(donnees):
                print(voter(voisins))
    return
 
-def trouver_voisins_proches(test, donnees):
+def trouver_voisins_proches(test, donnees, fonction):
    voisins = [[None, None]] * NOMBRES_VOISINS
    distances_labels = []
 
    for caractere_d in donnees:
       for d in caractere_d:
-         distance = mesure_distance_manhattan(test[0], d[0])
-         #distance = nearest_neighbors(tableau_image_test, d[0])
+         match fonction:
+            case 0:distance = distance_Hamming(test[0], d[0])
+            case 1:distance = np.sum(nearest_neighbors(test[0], d[0]))
+
          distances_labels.append((distance, d[1]))
 
    indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], NOMBRES_VOISINS)[:NOMBRES_VOISINS]
