@@ -16,6 +16,9 @@ from collections import Counter
 # Définir le chemin du répertoire EnglishHandwrittenCharacters
 chemin_repertoireEHWC = "./EnglishHandwrittenCharacters/"
 chemin_repertoire_Dictionnaires = "./Dictionnaires/"
+# Pour seulement les chiffres : 55*10
+# Pour seulement les chiffres + lettres majuscules : 55*36
+# Pour tous charactères : 55*62
 NOMBRE_IMAGES = 55*10
 NOMBRES_VOISINS = 5
 
@@ -137,13 +140,8 @@ def initialiser_position(donnes):
    return positions
 
 #https://stackoverflow.com/questions/45742199/find-nearest-neighbors-of-a-numpy-array-in-list-of-numpy-arrays-using-euclidian
-def nearest_neighbors(test, donne):
-   #positions_test = initialiser_position(test)
-   #positions_donnee = initialiser_position(donne)
-      
-   nn = NearestNeighbors(n_neighbors=1, metric='minkowski', algorithm='auto')
-   nn.fit(donne)
-   dists, idxs = nn.kneighbors(test)
+def nearest_neighbors(nn, donne):
+   dists, idxs = nn.kneighbors(donne)
    return dists
 
 # Fin calcul distance
@@ -193,6 +191,7 @@ def k_plus_proches_voisins(donnees, fonction):
             # Attendre que toutes les futures soient terminées
          for t, future in futures:
                voisins = future.result()
+               print(voisins)
                print(voter(voisins))
    return
 
@@ -200,11 +199,19 @@ def trouver_voisins_proches(test, donnees, fonction):
    voisins = [[None, None]] * NOMBRES_VOISINS
    distances_labels = []
 
+   if(fonction == 1):
+      nn = NearestNeighbors(n_neighbors=1, metric='manhattan', algorithm='auto')
+      nn.fit(test[0])
+   if(fonction == 2):
+      nn = NearestNeighbors(n_neighbors=1, metric='euclidean', algorithm='auto')
+      nn.fit(test[0])
+
    for caractere_d in donnees:
       for d in caractere_d:
          match fonction:
             case 0:distance = distance_Hamming(test[0], d[0])
-            case 1:distance = np.sum(nearest_neighbors(test[0], d[0]))
+            case 1:distance = np.sum(nearest_neighbors(nn, d[0]))
+            case 2:distance = np.sum(nearest_neighbors(nn, d[0]))
 
          distances_labels.append((distance, d[1]))
 
