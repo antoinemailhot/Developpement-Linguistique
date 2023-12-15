@@ -3,3 +3,4 @@ Image==1.5.33
 requests==2.31.0
 scipy==1.11.4
 NearestNeighbors==0.9
+Counter==1.0.0

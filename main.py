@@ -7,6 +7,8 @@ import csv
 import random
 from concurrent.futures import ThreadPoolExecutor
 from sklearn.neighbors import NearestNeighbors
+from collections import Counter
+
 #from scipy.spatial.distance import cdist
 
 # Chargement des fichiers externes.
@@ -14,6 +16,8 @@ from sklearn.neighbors import NearestNeighbors
 # Définir le chemin du répertoire EnglishHandwrittenCharacters
 chemin_repertoireEHWC = "./EnglishHandwrittenCharacters/"
 chemin_repertoire_Dictionnaires = "./Dictionnaires/"
+NOMBRE_IMAGES = 55*10
+NOMBRES_VOISINS = 5
 
 # Chargée un dictionnaire
 def charger_dictionnaire(chemin_dictionnaire):
@@ -66,7 +70,7 @@ def charger_toutes_les_images (donnees):
       image = obtenir_tableau_par_image_png(chemin.strip())
       tableau_images.append(image)
       cpt+=1
-      if(cpt>=550):
+      if(cpt>=NOMBRE_IMAGES):
          break
    return tableau_images
 
@@ -80,20 +84,18 @@ def valider_mot(mot, dictionnaire):
          return True
    return False
 
+
+
 # Main
 def main():
-    VOISINS = 5
     donnees = donnes_fichier_csv
     images = toutes_images #900 par 1200
     cpt = 0
-    donnees_images = np.full(550,None)
+    donnees_images = np.full(NOMBRE_IMAGES,None)
     for i in images:
        donnees_images[cpt] = [i, donnees[cpt][1][0]]
        cpt += 1
-    k_plus_proches_voisins(donnees_images, VOISINS)
-    #k_plus_proches_voisins(donnees, VOISINS, images)
-    #for chemin_Image in donnees[:,0]:
-      #print(obtenir_tableau_par_image_png(chemin_repertoireEHWC + chemin_Image[0]))
+    k_plus_proches_voisins(donnees_images)
             
 # Fin du main.
 
@@ -116,9 +118,6 @@ def distance_Hamming(vecteur1, vecteur2):
 
 # Mesure distance manhattan. (p = 1) //INF1183-SE-09-data_minning.pdf p.20
 def mesure_distance_manhattan(vecteur1, vecteur2):
-   #array1 = vecteur1[:, :, 0]
-   #array2 = vecteur2[:, :, 0]
-   #return cdist(array1, array2, metric='cityblock')
    return np.sum(np.abs(vecteur1-vecteur2))
    
 
@@ -128,7 +127,6 @@ def mesure_distance_euclidienne(vecteur1, vecteur2):
 
 #https://stackoverflow.com/questions/45742199/find-nearest-neighbors-of-a-numpy-array-in-list-of-numpy-arrays-using-euclidian
 def nearest_neighbors(values, all_values, nbr_neighbors=1):
-    
     nn = NearestNeighbors(nbr_neighbors, metric='minkowski', algorithm='auto').fit(all_values)
     dists, idxs = nn.kneighbors(values)
     return dists
@@ -136,8 +134,6 @@ def nearest_neighbors(values, all_values, nbr_neighbors=1):
 # Fin calcul distance
 
 #trouver le caractere le plus frequent dans les voisins
-from collections import Counter
-
 def voter(voisins):
     # Créer un compteur des caractères à partir des voisins
     compteur = Counter(v[1] for v in voisins)
@@ -149,11 +145,8 @@ def voter(voisins):
     # Retourner le caractère le plus fréquent
     return caractere
 
-
-
-
 # Calcul des K plus proches voisins.
-def k_plus_proches_voisins(donnees, nb_voisins):
+def k_plus_proches_voisins(donnees):
    NB_IMAGES_PAR_CHARACTERE = 55
    POURCENTAGE_TEST = 0.1
 
@@ -163,60 +156,24 @@ def k_plus_proches_voisins(donnees, nb_voisins):
    with ThreadPoolExecutor(max_workers=5) as executeur:
       for caractere_t in donnees_test:
 
-         print("tests pour le caractère: ", caractere_t[0][1][0])
-
          # Utilisation de multi-thread : https://docs.python.org/3/library/concurrent.futures.html
          futures = []
 
          print("tests pour le caractère: ", caractere_t[0][1][0])
          for t in caractere_t:
-            # Utilisé l'image pré-chargée
-            #print(t[0][0])
-            #tableau_image_test = images[t[0][0]]
-
             # Soumettre la tâche au ThreadPoolExecutor
-            future = executeur.submit(trouver_voisins_proches, t, donnees, nb_voisins)
+            future = executeur.submit(trouver_voisins_proches, t, donnees)
             #future = executeur.submit(nearest_neighbors, donnees_test, donnees)
-            print("Append future :")
-            print(future)
             futures.append((t, future))
 
             # Attendre que toutes les futures soient terminées
          for t, future in futures:
                voisins = future.result()
                print(voter(voisins))
-
-
-
-      #for t in caractere_t:
-         #for caractere_d in donnees:
-         #   for d in caractere_d:
-         #      distance = distance_Hamming(tableau_image_test, obtenir_tableau_par_image_png(chemin_repertoireEHWC + d[0][0]))
-         #      index_plus_grande_distance = 0
-         #      i = 0
-         #      while i < nb_voisins:
-         #         # Si le voisin[i][0] est null alors on assigne l'index plus grande distance à i.
-         #         if(voisins[i][0] is None):
-         #            index_plus_grande_distance = i
-         #            break
-                  # Si le voisin[i][0] est plus grand que mon voisin le plus grand, alors il devient mon 
-                  # voisin le plus grand.
-         #         if(voisins[i][0] > voisins[index_plus_grande_distance][0]):
-         #            index_plus_grande_distance = i
-
-                  # on passe à l'index suivant.
-         #         i += 1
-         #      if(voisins[index_plus_grande_distance][0] is None or distance < voisins[index_plus_grande_distance][0]):
-         #         voisins[index_plus_grande_distance] = [distance, d[1][0]]
-         #print(voter(voisins))
-
-
-
    return
 
-def trouver_voisins_proches(test, donnees, nb_voisins):
-   #nb_voisins = len(donnees[0])
-   voisins = [[None, None]] * nb_voisins
+def trouver_voisins_proches(test, donnees):
+   voisins = [[None, None]] * NOMBRES_VOISINS
    distances_labels = []
 
    for caractere_d in donnees:
@@ -225,7 +182,7 @@ def trouver_voisins_proches(test, donnees, nb_voisins):
          #distance = nearest_neighbors(tableau_image_test, d[0])
          distances_labels.append((distance, d[1]))
 
-   indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], nb_voisins)[:nb_voisins]
+   indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], NOMBRES_VOISINS)[:NOMBRES_VOISINS]
 
    for i, index in enumerate(indices_k_plus_petites):
       voisins[i] = [distances_labels[index][0], distances_labels[index][1]]
@@ -253,13 +210,13 @@ def indexs_aleatoires(pourcentage:float, longueur:int):
 # sépare les données d'entrainement des données de test
 def separer_donnees(donnees, test):
    NB_IMAGES_PAR_CHARACTERE = 55
-   NB_CARACTERES_DIFFERENTS = 10 #62
+   NB_CARACTERES = int(NOMBRE_IMAGES/NB_IMAGES_PAR_CHARACTERE)
    index = 0
    index_t = 0
    index_d = 0
 
-   tab_test = np.full((NB_CARACTERES_DIFFERENTS, len(test)),None)
-   tab_donnees = np.full((NB_CARACTERES_DIFFERENTS, NB_IMAGES_PAR_CHARACTERE - len(test)),None)
+   tab_test = np.full((NB_CARACTERES, len(test)),None)
+   tab_donnees = np.full((NB_CARACTERES, NB_IMAGES_PAR_CHARACTERE - len(test)),None)
 
    for d in donnees:
       if (test.count(index % NB_IMAGES_PAR_CHARACTERE) > 0):
@@ -273,7 +230,6 @@ def separer_donnees(donnees, test):
          if(index_d == len(tab_donnees[0])):
             index_d = 0
       index += 1
-   print(tab_test)
    return tab_donnees, tab_test
 
 if __name__ == "__main__":
