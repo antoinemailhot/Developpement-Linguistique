@@ -14,23 +14,14 @@ from collections import Counter
 # Chargement des fichiers externes.
 
 # Définir le chemin du répertoire EnglishHandwrittenCharacters
-chemin_repertoireEHWC = "./EnglishHandwrittenCharacters/"
-chemin_repertoire_Dictionnaires = "./Dictionnaires/"
+CHEMIN_REPERTOIRE_EHWC = "./EnglishHandwrittenCharacters/"
+#CHEMIN_REPERTOIRE_DICTIONNAIRES = "./Dictionnaires/"
+
 # Pour seulement les chiffres : 55*10
 # Pour seulement les chiffres + lettres majuscules : 55*36
 # Pour tous charactères : 55*62
 NOMBRE_IMAGES = 55*10
 NOMBRES_VOISINS = 5
-
-# Chargée un dictionnaire
-def charger_dictionnaire(chemin_dictionnaire):
-   with open(chemin_dictionnaire, "r", encoding="utf-8") as fichier:
-      mots = {mot.strip() for mot in fichier}
-   return mots
-
-# Charger les dictionnaires.
-dictionnaire_anglais = charger_dictionnaire(chemin_repertoire_Dictionnaires + "american-english")
-dictionnaire_francais = charger_dictionnaire(chemin_repertoire_Dictionnaires + "french")
 
 # Retourne un tableau Numpy à partir d'un fichier png.
 def obtenir_tableau_par_image_png(chemin):
@@ -41,7 +32,7 @@ def obtenir_tableau_par_image_png(chemin):
    tableau_pixels = np.array(image)
 
    # Normaliser les valeurs de pixels entre 0 et 1.
-   tableau_pixels = tableau_pixels[:,:,0] / 255
+   tableau_pixels = tableau_pixels[:,:,0] // 255
 
    # Convertit l'image en un tableau et le retourne.
    return tableau_pixels
@@ -62,12 +53,12 @@ def obtenir_tableau_traiter_depuis_fichier_csv(chemin):
    return donnees[1:]
 
 # Charger le fichier csv.
-donnes_fichier_csv = obtenir_tableau_traiter_depuis_fichier_csv(chemin_repertoireEHWC + "english.csv")
+DONNEES_FICHIER_CSV = obtenir_tableau_traiter_depuis_fichier_csv(CHEMIN_REPERTOIRE_EHWC + "english.csv")
 
 # Chargements des images.
 def charger_toutes_les_images (donnees):
    tableau_images = []
-   chemins_images = [chemin_repertoireEHWC + str(chemin[0]).strip() for chemin in donnees[:, 0]]
+   chemins_images = [CHEMIN_REPERTOIRE_EHWC + str(chemin[0]).strip() for chemin in donnees[:, 0]]
    cpt=0
    for chemin in chemins_images:
       image = obtenir_tableau_par_image_png(chemin.strip())
@@ -77,32 +68,28 @@ def charger_toutes_les_images (donnees):
          break
    return tableau_images
 
-toutes_images = charger_toutes_les_images(donnes_fichier_csv)
-
-# Valider un mot
-def valider_mot(mot, dictionnaire):
-   mot_minuscule = mot.lower()
-   for mot_dictionnaire in dictionnaire:
-      if(mot_dictionnaire.lower() == mot_minuscule):
-         return True
-   return False
-
-
+TOUTES_IMAGES = charger_toutes_les_images(DONNEES_FICHIER_CSV)
 
 # Main
 def main():
-    donnees = donnes_fichier_csv
-    images = toutes_images #900 par 1200
+    donnees = DONNEES_FICHIER_CSV
+    images = TOUTES_IMAGES #900 par 1200
     cpt = 0
     donnees_images = np.full(NOMBRE_IMAGES,None)
     for i in images:
        donnees_images[cpt] = [i, donnees[cpt][1][0]]
        cpt += 1
-    k_plus_proches_voisins(donnees_images, fonction=1)
+    
+    entree_valide = False   
+    while(not entree_valide): #Choix de la distance
+      print("Choix de la distance (0)Hamming (1)Manhattan (2)Euclidienne")
+      fonction = int(input())
+      if(fonction == 0 or fonction == 1 or fonction == 2):
+         entree_valide = True
+   
+    k_plus_proches_voisins(donnees_images, fonction)
             
 # Fin du main.
-
-# Calcul distance 
 
 # Calcul distance hamming sur deux vecteur. //Cours INF1183-SE-09-data_minning.pdf p.21
 def distance_Hamming(vecteur1, vecteur2):
@@ -116,17 +103,6 @@ def distance_Hamming(vecteur1, vecteur2):
    # cela peut générer une erreur.
     xor_result = np.bitwise_xor(vecteur1, vecteur2)
     return np.count_nonzero(xor_result)
-
-# Calcul distance //Cours INF1183-SE-09-data_minning.pdf p.20
-
-# Mesure distance manhattan. (p = 1) //INF1183-SE-09-data_minning.pdf p.20
-def mesure_distance_manhattan(vecteur1, vecteur2):
-   return np.sum(np.abs(vecteur1-vecteur2))
-   
-
-# Mesure distance euclidienne. (p = 2) //INF1183-SE-09-data_minning.pdf p.20
-def mesure_distance_euclidienne(vecteur1, vecteur2):
-   return np.sqrt(np.sum(vecteur1 - vecteur2) ** 2)
 
 def initialiser_position(donnes):
    positions = []     
@@ -143,8 +119,6 @@ def initialiser_position(donnes):
 def nearest_neighbors(nn, donne):
    dists, idxs = nn.kneighbors(donne)
    return dists
-
-# Fin calcul distance
 
 #trouver le caractere le plus frequent dans les voisins
 def voter(voisins):
@@ -174,7 +148,6 @@ def k_plus_proches_voisins(donnees, fonction):
       for caractere_t in donnees_test:
          for t in caractere_t:
             t[0] = initialiser_position(t[0])
-
 
    with ThreadPoolExecutor(max_workers=5) as executeur:
       for caractere_t in donnees_test:
@@ -264,6 +237,24 @@ def separer_donnees(donnees, test):
             index_d = 0
       index += 1
    return tab_donnees, tab_test
+
+# Valider un mot
+#def valider_mot(mot, dictionnaire):
+#   mot_minuscule = mot.lower()
+#   for mot_dictionnaire in dictionnaire:
+#      if(mot_dictionnaire.lower() == mot_minuscule):
+#         return True
+#   return False
+
+ #Chargée un dictionnaire
+#def charger_dictionnaire(chemin_dictionnaire):
+#   with open(chemin_dictionnaire, "r", encoding="utf-8") as fichier:
+#      mots = {mot.strip() for mot in fichier}
+#   return mots
+
+ #Charger les dictionnaires.
+#DICTIONNAIRE_ANGLAIS = charger_dictionnaire(chemin_repertoire_Dictionnaires + "american-english")
+#DICTIONNAIRE_FRANCAIS = charger_dictionnaire(chemin_repertoire_Dictionnaires + "french")
 
 if __name__ == "__main__":
  main()
