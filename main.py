@@ -110,8 +110,8 @@ def distance_Hamming(vecteur1, vecteur2):
     xor_result = np.bitwise_xor(vecteur1, vecteur2)
     return np.count_nonzero(xor_result)
 
-def initialiser_position(donnes):
-   NB_POSITIONS_EXCLUS = 2 #On garde la position d'un pixel sur NB_POSITIONS_EXCLUS au carré
+def initialiser_positions(donnes):
+   NB_POSITIONS_EXCLUS = 10 #On garde la position d'un pixel sur NB_POSITIONS_EXCLUS au carré
    positions0 = []     
    positions1 = []  
    cpt_ligne = 0
@@ -157,10 +157,10 @@ def k_plus_proches_voisins(donnees, fonction, k):
    if(fonction >= 1):
       for caractere_d in donnees:
          for d in caractere_d:
-            d[0],d[2] = initialiser_position(d[0])
+            d[0],d[2] = initialiser_positions(d[0])
       for caractere_t in donnees_test:
          for t in caractere_t:
-            t[0],t[2] = initialiser_position(t[0])
+            t[0],t[2] = initialiser_positions(t[0])
 
    with ThreadPoolExecutor(max_workers=5) as executeur:
       for caractere_t in donnees_test:
