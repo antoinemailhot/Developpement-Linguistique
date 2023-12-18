@@ -21,7 +21,6 @@ CHEMIN_REPERTOIRE_EHWC = "./EnglishHandwrittenCharacters/"
 # Pour seulement les chiffres + lettres majuscules : 55*36
 # Pour tous charactères : 55*62
 NOMBRE_IMAGES = 55*10
-NOMBRES_VOISINS = 5
 
 # Retourne un tableau Numpy à partir d'un fichier png.
 def obtenir_tableau_par_image_png(chemin):
@@ -77,7 +76,7 @@ def main():
     cpt = 0
     donnees_images = np.full(NOMBRE_IMAGES,None)
     for i in images:
-       donnees_images[cpt] = [i, donnees[cpt][1][0]]
+       donnees_images[cpt] = [i, donnees[cpt][1][0], None]
        cpt += 1
     
     entree_valide = False   
@@ -86,8 +85,15 @@ def main():
       fonction = int(input())
       if(fonction == 0 or fonction == 1 or fonction == 2):
          entree_valide = True
+
+    entree_valide = False
+    while(not entree_valide): #Choix du k
+      print("Choix du nombre de voisins (k)")
+      k = int(input())
+      if(k >= 1):
+         entree_valide = True
    
-    k_plus_proches_voisins(donnees_images, fonction)
+    k_plus_proches_voisins(donnees_images, fonction, k)
             
 # Fin du main.
 
@@ -105,15 +111,22 @@ def distance_Hamming(vecteur1, vecteur2):
     return np.count_nonzero(xor_result)
 
 def initialiser_position(donnes):
-   positions = []     
+   NB_POSITIONS_EXCLUS = 2 #On garde la position d'un pixel sur NB_POSITIONS_EXCLUS au carré
+   positions0 = []     
+   positions1 = []  
    cpt_ligne = 0
-   for valeur in donnes:
-      for ligne in np.where(valeur == 0):
-         if(len(ligne) != 0):
-            for colonne in ligne:
-               positions.append([cpt_ligne,colonne])
+   for ligne in donnes:         
+      cpt_colonne = 0
+      if((cpt_ligne % NB_POSITIONS_EXCLUS) == 0):
+         for colonne in ligne:
+            if((cpt_colonne % NB_POSITIONS_EXCLUS) == 0): 
+               if (colonne == 0):
+                  positions0.append([cpt_ligne,cpt_colonne])
+               else:
+                  positions1.append([cpt_ligne,cpt_colonne])
+            cpt_colonne += 1   
       cpt_ligne += 1
-   return positions
+   return positions0, positions1
 
 #https://stackoverflow.com/questions/45742199/find-nearest-neighbors-of-a-numpy-array-in-list-of-numpy-arrays-using-euclidian
 def nearest_neighbors(nn, donne):
@@ -133,21 +146,21 @@ def voter(voisins):
     return caractere
 
 # Calcul des K plus proches voisins.
-def k_plus_proches_voisins(donnees, fonction):
+def k_plus_proches_voisins(donnees, fonction, k):
    NB_IMAGES_PAR_CHARACTERE = 55
    POURCENTAGE_TEST = 0.1
 
-   #indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
-   indexs_test = [0,1,2,3,4]
+   indexs_test = indexs_aleatoires(POURCENTAGE_TEST, NB_IMAGES_PAR_CHARACTERE)
+   #indexs_test = [5,6,7,8,9] #indexs non aleatoire pour comparer les resultats des differentes distances
    donnees, donnees_test = separer_donnees(donnees, indexs_test)
 
    if(fonction >= 1):
       for caractere_d in donnees:
          for d in caractere_d:
-            d[0] = initialiser_position(d[0])
+            d[0],d[2] = initialiser_position(d[0])
       for caractere_t in donnees_test:
          for t in caractere_t:
-            t[0] = initialiser_position(t[0])
+            t[0],t[2] = initialiser_position(t[0])
 
    with ThreadPoolExecutor(max_workers=5) as executeur:
       for caractere_t in donnees_test:
@@ -158,7 +171,7 @@ def k_plus_proches_voisins(donnees, fonction):
          print("tests pour le caractère: ", caractere_t[0][1])
          for t in caractere_t:
             # Soumettre la tâche au ThreadPoolExecutor
-            future = executeur.submit(trouver_voisins_proches, t, donnees, fonction)
+            future = executeur.submit(trouver_voisins_proches, t, donnees, fonction, k)
             futures.append((t, future))
 
             # Attendre que toutes les futures soient terminées
@@ -168,27 +181,31 @@ def k_plus_proches_voisins(donnees, fonction):
                print(voter(voisins))
    return
 
-def trouver_voisins_proches(test, donnees, fonction):
-   voisins = [[None, None]] * NOMBRES_VOISINS
+def trouver_voisins_proches(test, donnees, fonction, k):
+   voisins = [[None, None]] * k
    distances_labels = []
 
    if(fonction == 1):
-      nn = NearestNeighbors(n_neighbors=1, metric='manhattan', algorithm='auto')
-      nn.fit(test[0])
+      nn0 = NearestNeighbors(n_neighbors=1, metric='manhattan', algorithm='auto')
+      nn0.fit(test[0])
+      nn1 = NearestNeighbors(n_neighbors=1, metric='manhattan', algorithm='auto')
+      nn1.fit(test[2])
    if(fonction == 2):
-      nn = NearestNeighbors(n_neighbors=1, metric='euclidean', algorithm='auto')
-      nn.fit(test[0])
+      nn0 = NearestNeighbors(n_neighbors=1, metric='euclidean', algorithm='auto')
+      nn0.fit(test[0])
+      nn1 = NearestNeighbors(n_neighbors=1, metric='euclidean', algorithm='auto')
+      nn1.fit(test[2])
 
    for caractere_d in donnees:
       for d in caractere_d:
          match fonction:
             case 0:distance = distance_Hamming(test[0], d[0])
-            case 1:distance = np.sum(nearest_neighbors(nn, d[0]))
-            case 2:distance = np.sum(nearest_neighbors(nn, d[0]))
+            case 1:distance = np.sum(nearest_neighbors(nn0, d[0])) + np.sum(nearest_neighbors(nn1, d[2]))
+            case 2:distance = np.sum(nearest_neighbors(nn0, d[0])) + np.sum(nearest_neighbors(nn1, d[2]))
 
          distances_labels.append((distance, d[1]))
 
-   indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], NOMBRES_VOISINS)[:NOMBRES_VOISINS]
+   indices_k_plus_petites = np.argpartition([d[0] for d in distances_labels], k)[:k]
 
    for i, index in enumerate(indices_k_plus_petites):
       voisins[i] = [distances_labels[index][0], distances_labels[index][1]]
